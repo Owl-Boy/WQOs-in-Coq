@@ -1,0 +1,82 @@
+From Coq Require Import Bool.Bool.
+From Coq Require Import Init.Nat.
+From Coq Require Import Arith.Arith.
+From Coq Require Import Arith.EqNat. Import Nat.
+From Coq Require Import ZArith.
+From Coq Require Import Lists.List. Import ListNotations.
+From Coq Require Import Extraction.
+From Coq Require Import Lia.
+From Coq Require Import Program.
+From Coq Require Import Program.Wf.
+From Coq Require Import Strings.String.
+Set Implicit Arguments.
+Open Scope string_scope.
+
+Search Nat.leb.
+
+Class Quasi_Order (A : Type) := {
+    ord : A -> A -> Prop;
+    refl_axiom : forall a, ord a a;
+    trans_axiom : forall a b c, ord a b -> ord b c -> ord a c
+  }.
+
+Notation "a '<=qo' b" := (ord a b) (at level 50).
+Notation "a '<qo' b" := (ord a b /\ a <> b) (at level 50).
+
+
+Class Partial_Order (A : Type) `{Quasi_Order A} := {
+    anti_sym_axiom : forall a b, a <=qo b -> b <=qo a -> a = b
+  }.
+
+Class Total_Order (A : Type) `{Partial_Order A} := {
+    total_order_axiom : forall a b, ord a b \/ ord b a
+  }.
+
+
+Section NatQO.
+
+#[export] Instance QONat : Quasi_Order nat :=
+{
+	ord := le;
+	refl_axiom := le_refl;
+	trans_axiom := le_trans;
+}.
+
+#[export] Instance PONat : Partial_Order :=
+{
+	anti_sym_axiom := le_antisymm;
+}.
+
+Lemma le_dec' : 
+
+#[export] Instance TONat : Total_Order :=
+{
+	
+
+Definition inj (f : nat -> nat) := forall x y, f x = f y -> x = y.
+
+Definition wqo_axiom1 (A : Type) `{Quasi_Order A} : Prop :=
+  forall (f : nat -> A), exists x y, ord (f x) (f y).
+
+Definition increasing {A : Type} `{Quasi_Order A} (f : nat -> A) :=
+  forall x y, x < y -> (f x) <=qo (f y).
+
+Definition wqo_axiom2 (A : Type) `{Quasi_Order A} : Prop :=
+  forall (f : nat -> A), exists (f' : nat -> nat),
+    inj f' /\ increasing (fun n => f (f' n)).
+
+Definition anti_chain {A : Type} `{Quasi_Order A} (f : nat -> A) :=
+  forall x y, x <> y -> ~(ord (f x) (f y)) /\ ~(ord (f y) (f x)).
+
+Definition descending {A : Type} `{Quasi_Order A} (f : nat -> A) :=
+  forall x y, x < y -> (ord (f y) (f x)) /\ f x <> f y.
+
+Definition wqo_axiom3 (A : Type) `{Quasi_Order A} : Prop :=
+  forall (f : nat -> A), ~(exists f' : nat ->  nat, inj f' /\ (anti_chain (fun n => f (f' n))
+                                          \/ descending (fun n => f (f' n)))).
+
+Theorem wqo_equiv (A : Type) `{Quasi_Order A} : (wqo_axiom1 -> wqo_axiom2)
+                                              /\ (wqo_axiom2 -> wqo_axiom3)
+                                              /\ (wqo_axiom3 -> wqo_axiom1).
+  unfold wqo_axiom1, wqo_axiom2, wqo_axiom3.
+  repeat (split; intros).
