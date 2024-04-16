@@ -12,54 +12,66 @@ From Coq Require Import Strings.String.
 Set Implicit Arguments.
 Open Scope string_scope.
 
-Search Nat.leb.
-
-Class Quasi_Order {A : Type} (ord : A -> A -> Prop) : Prop := {
-    refl_axiom : forall a, ord a a;
-    trans_axiom : forall a b c, ord a b -> ord b c -> ord a c
-  }.
-
-(* Notation "a '<=qo' b" := (ord a b) (at level 50). *)
-(* Notation "a '<qo' b" := (ord a b /\ a <> b) (at level 50). *)
-
-Class Partial_Order {A : Type} (ord : A -> A -> Prop) `{Quasi_Order} : Prop := {
-    anti_sym_axiom : forall a b, ord a b -> ord b a -> a = b
-  }.
-
-Class Total_Order {A : Type} (ord : A -> A -> Prop) `{Partial_Order} : Prop := {
-    total_order_axiom : forall a b, ord a b \/ ord b a
-  }.
+Section Defs.
+  Context {A : Type}.
+  Definition relation := A -> A -> Prop.
 
 
-Search (_ <= _).
+  Class Reflexive (R : relation) := refl : forall x, R x x.
 
-Section Nat_QO.
+  Class Transitive (R : relation) :=
+    trans : forall x y z, R x y -> R y z -> R x z.
+
+  Class Antisymmetry (R : relation) :=
+    anti_sym : forall x y, R x y -> R y x -> x = y.
+
+  Class Completeness (R : relation) :=
+    comp : forall x y, R x y \/ R y x.
+
+
+  Class Quasi_Order (R : relation) : Prop := {
+      qo_refl :: Reflexive R;
+      qo_trans :: Transitive R;
+    }.
+
+  Class Partial_Order (R : relation) : Prop := {
+      po_qo :: Quasi_Order R;
+      po_anti_sym :: Antisymmetry R;
+    }.
+
+  Class Total_Order (R : relation) : Prop := {
+      to_po :: Partial_Order R;
+      to_comp :: Completeness R;
+    }.
+End Defs.
+
+Search (_ < _).
+
+Section Nat_TO.
+
   Lemma le_dec' : forall n m, n <= m \/ m <= n.
     Proof. lia. Qed.
 
-  Instance QONat : Quasi_Order le :=
-    {
-      refl_axiom := le_refl;
-      trans_axiom := le_trans;
-    }.
+  Instance Le_Refl : Reflexive le := le_refl.
+  Instance Le_Trans : Transitive le := le_trans.
+  Instance Le_Anti_Sym : Antisymmetry le := le_antisymm.
+  Instance Le_Comp : Completeness le := le_dec'.
 
-  Instance PONat: Partial_Order le :=
-    { anti_sym_axiom := Nat.le_antisymm; }.
+  Instance Le_QO : Quasi_Order le := { }.
+  Instance Le_PO : Partial_Order le := { }.
+  Instance Le_TO : Total_Order le := { }.
 
-  Instance TONat: Total_Order le :=
-    { total_order_axiom := le_dec'; }.
-End Nat_QO.
+End Nat_TO.
 
-Section Ext_Nat_QO.
+Section Ext_Nat_TO.
+
   Inductive ext_nat : Set :=
   | ENat:  forall n : nat, ext_nat
-  | EInf : ext_nat
-  .
-  
+  | EInf : ext_nat.
+
   Inductive en_le : ext_nat -> ext_nat -> Prop :=
   | en_le_nat : forall n m : nat, n <= m -> (en_le (ENat n) (ENat m))
-  | en_le_inf : forall n : ext_nat, (en_le n EInf)
-  .
+  | en_le_inf : forall n : ext_nat, (en_le n EInf).
 
   Notation "n '<=e' m" := (en_le n m) (at level 50).
   Notation "n '<e' m" := (en_le n m /\ n <> m) (at level 50).
@@ -98,7 +110,7 @@ Section Ext_Nat_QO.
   Proof. intros n m H. unfold en_ge. split.
   - apply en_le_nat. lia.
   - unfold not. intros. injection H0. intros. lia.
-  Qed. 
+  Qed.
 
   Lemma einf_gt_nat : forall n : nat, EInf >e ENat n.
   Proof. intros n. unfold en_ge. split. apply en_le_inf. unfold not. intros. discriminate.
@@ -134,24 +146,12 @@ Section Ext_Nat_QO.
   Lemma en_le_trans : forall u v w : ext_nat, u <=e v -> v <=e w -> u <=e w.
   Proof. enatlia. Qed.
 
-  Instance QOENat : Quasi_Order en_le :=
-    {
-      refl_axiom := en_le_refl;
-      trans_axiom := en_le_trans;
-    }.
-
   Lemma po_enat : forall (a b : ext_nat), a <=e b -> b <=e a -> a = b.
     Proof. enatlia. Qed.
 
-  Instance POENat : Partial_Order en_le :=
-    { anti_sym_axiom := po_enat }.
-
-  Check total_order_axiom 1.
-
-  Lemma to_enat : forall (a b : ext_nat), en_le a b \/ en_le b a.
+  Lemma to_enat : forall a b, a <=e b \/ b <=e a.
   Proof.
-    intros. destruct a, b.
-    assert (n <= n0 \/ n0 <= n) by (apply TONat).
+    intros. destruct a, b. assert (n <= n0 \/ n0 <= n) by (apply Le_Comp).
     destruct H.
     - left. enatlia.
     - right. enatlia.
@@ -160,64 +160,13 @@ Section Ext_Nat_QO.
     - left. enatlia.
   Qed.
 
-  Instance TOENat : Total_Order en_le :=
-    { total_order_axiom := to_enat; }.
+  Instance En_Le_Refl : Reflexive en_le := en_le_refl.
+  Instance En_Le_Trans : Transitive en_le := en_le_trans.
+  Instance En_Le_AntiSym : Antisymmetry en_le := po_enat.
+  Instance En_Le_Comp : Completeness en_le := to_enat.
 
-  
-  (* Instance QONat : Quasi_Order nat := *)
-    
-  (*   { *)
-  (*     ord := le; *)
-  (*     refl_axiom := le_refl; *)
-  (*     trans_axiom := le_trans; *)
-  (*   }. *)
+  Instance En_Le_QO : Quasi_Order en_le := { }.
+  Instance En_Le_PO : Partial_Order en_le := { }.
+  Instance En_Le_TO : Total_Order en_le := { }.
 
-  (* Instance PONat: Partial_Order := *)
-  (*   { anti_sym_axiom := Nat.le_antisymm; }. *)
-
-  (* Instance TONat: Total_Order := *)
-  (*   { total_order_axiom := le_dec'; }. *)
-
-
-
-
-
-
-
-
-
-
-
-
-(* Stay Away for now *)
-
-Definition inj (f : nat -> nat) := forall x y, f x = f y -> x = y.
-
-Definition wqo_axiom1 (A : Type) `{Quasi_Order A} : Prop :=
-  forall (f : nat -> A), exists x y, (f x) <=qo (f y).
-
-Definition increasing {A : Type} `{Quasi_Order A} (f : nat -> A) :=
-  forall x y, x < y -> (f x) <=qo (f y).
-
-Definition wqo_axiom2 (A : Type) `{Quasi_Order A} : Prop :=
-  forall (f : nat -> A), exists (f' : nat -> nat),
-    inj f' /\ increasing (fun n => f (f' n)).
-
-Definition anti_chain {A : Type} `{Quasi_Order A} (f : nat -> A) :=
-  forall x y, x <> y -> ~((f x) <=qo (f y)) /\ ~((f y) <=qo (f x)).
-
-Definition descending {A : Type} `{Quasi_Order A} (f : nat -> A) :=
-  forall x y, x < y -> ((f y) <=qo (f x)) /\ f x <> f y.
-
-Definition wqo_axiom3 (A : Type) `{Quasi_Order A} : Prop :=
-  forall (f : nat -> A), ~(exists f' : nat ->  nat, inj f' /\ (anti_chain (fun n => f (f' n))
-                                          \/ descending (fun n => f (f' n)))).
-
-Theorem wqo_equiv (A : Type) `{Quasi_Order A} : (wqo_axiom1 -> wqo_axiom2)
-                                              /\ (wqo_axiom2 -> wqo_axiom3)
-                                              /\ (wqo_axiom3 -> wqo_axiom1).
-  unfold wqo_axiom1, wqo_axiom2, wqo_axiom3.
-  repeat (split; intros).
-  Admitted.
-
-
+End Ext_Nat_TO.
