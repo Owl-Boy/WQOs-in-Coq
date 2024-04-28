@@ -16,7 +16,6 @@ Section Defs.
   Context {A : Type}.
   Definition relation := A -> A -> Prop.
 
-
   Class Reflexive (R : relation) := refl : forall x, R x x.
 
   Class Transitive (R : relation) :=
