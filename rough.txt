@@ -1,0 +1,249 @@
+Definition wqo_axiom2 (qo : Quasi_Order R) : Prop :=
+	forall (f : nat -> A), exists (f' : nat -> nat),
+	increasing Le_QO f' /\ increasing qo (fun n => f (f' n)).
+
+	Definition wqo_axiom2_fn (qo : Quasi_Order R) (f : nat -> A) (f' : nat -> nat) : Prop := 
+		increasing Le_QO f' /\ increasing qo (fun n => f (f' n)).
+
+	Definition wqo_axiom2_sig (qo : Quasi_Order R) := 
+		{g : (nat -> A) -> (nat -> nat) | forall f : (nat -> A), wqo_axiom2_fn qo f (g f)}.
+
+	Lemma wqo_helper2 : forall (qo : Quasi_Order R), (wqo_axiom2_sig qo) -> (wqo_axiom2 qo).
+	Proof. intros qo. unfold wqo_axiom2_sig, wqo_axiom2. intros H.
+	destruct H. intros f. specialize w with f.
+	unfold wqo_axiom2_fn in w.
+	exists (x f).
+	auto.
+	Qed.
+
+
+	Theorem wqo_equiv1 : forall (qo : Quasi_Order R),
+	(wqo_axiom1_sig qo) -> (wqo_axiom2_sig qo).
+	Proof. intros qo. unfold wqo_axiom1_sig, wqo_axiom2_sig. 
+	intros S. destruct S as [g Hg].
+	unfold wqo_axiom1_fn in Hg. unfold wqo_axiom2_fn.
+
+	assert ({g : (nat -> A) -> nat | forall f : (nat -> A),
+		forall n : nat, (g f) < n -> is_dominated qo n f}).
+	{ unfold is_dominated.
+		Check fin_or_inf.
+		generalize fin_or_inf with 
+
+
+
+
+
+
+
+
+
+
+
+
+
+	(* assert {g : nat -> nat * nat | forall a : nat, let y := (fst (g a)) in let z := (snd (g a)) in a < y /\ y < z /\ (f y <=qo (f z))}. 
+	{ apply exist with (fun n => let f' := (fun m => f(n + m + 1)) in (n + fst (g f') + 1, n + snd (g f') + 1)). 
+		intros a. destruct (P (fun m => f(a + m + 1))). simpl.
+		split. lia. split. lia.
+		assumption.
+	} *)
+
+
+
+	(* assert (forall x : nat, exists y z : nat, 
+					x < y /\ y < z /\ (f y <=qo (f z))).
+	{ intros x. specialize H with (fun n => f (x + n + 1)).
+		destruct H as [y [z [Hex1 Hex2]]].
+		exists (x + y + 1). exists (x + z + 1).
+		split. lia.
+		split. lia.
+		assumption.
+	} *) 
+
+	(* remember (extract_fn_bin (fun x y z : nat =>
+		x < y /\ y < z /\ f y <=qo f z)) as fn_ex_hyp; clear Heqfn_ex_hyp.
+	assert (forall a : nat, 
+		{p : nat * nat | (fun x y z : nat => x < y /\ y < z /\ f y <=qo f z)
+                 a (fst p) (snd p)}).
+	{ intros a. specialize H0 with a. *)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+assert ({f' : nat -> nat | forall n m : nat,
+				~ dominated_by qo n m (fun n' => h (f' n'))}).
+			{	apply exist with (fix phi (k : nat) :=
+					match k with
+					| 0 => match (H 0) with
+								 | exist _ n _ => n
+								 end
+					| S k' => match (H (phi k')) with
+								 | exist _ n _ => n
+								 end
+					end
+				).
+				unfold dominated_by.
+				
+				induction n as [| n IHn];
+				induction m as [| m IHm]; try lia.
+				(* case: n = 0, S m *)
+				- apply de_morgan_not_and in IHm as [IHm | IHm].
+						* assert (m = 0) by lia.
+							subst. clear IHm.
+							apply de_morgan_not_and. right.
+							destruct (H 0) as [n Hn].
+							destruct (H n) as [n' Hn'].
+							unfold not; intros Hnn'.
+							destruct Hn as [_ Hn];
+							destruct Hn' as [Hn' _].
+							specialize Hn with n'.
+							unfold dominated_by in Hn; auto.
+						* apply de_morgan_not_and. right.
+							destruct (H 0) as [n Hn] eqn:En.
+							destruct (H
+       					((fix phi (k : nat) : nat :=
+           					match k with
+           					| 0 => n
+           					| S k' => let (n0, _) := H (phi k') 
+												in n0
+           					end) m)) as [n' Hn'] eqn:En'.
+							unfold not; intros Hnn'.
+							destruct Hn as [Hn1 Hn2].
+							destruct Hn' as [Hn' Hn'1].
+							remember (Hn2 n') as Hnot_dom_nn';
+							clear HeqHnot_dom_nn'.
+							assert (n < (fix phi (k : nat) : nat :=
+         								match k with
+         								| 0 => n
+         								| S k' => 
+														let (n0, _) := H (phi k') in n0
+         								end) m
+							).
+							{ assert (n = (fix phi (k : nat) : nat :=
+              		match k with
+              		| 0 => n
+              		| S k' => let (n0, _) := H (phi k') in n0
+              		end) 0
+								) by auto. apply (phi_inc 0 m).
+								assert (0 < m \/ 0 = m) as [Hx | Hx] by lia;
+								try assumption.
+								exfalso. subst.
+								assert (h n <=qo h n) by (apply qo_refl).
+								contradiction.
+							}
+							assert (n < n') by lia.
+							apply Hnot_dom_nn'. unfold dominated_by.
+							split; try assumption.
+							assert (n' =
+        				(fix phi (k : nat) : nat :=
+            			match k with
+            			| 0 => n
+            			| S k' => let (n0, _) := H (phi k') in n0
+            			end) (S m)
+							). { rewrite En'. reflexivity. }
+						rewrite H2. assumption.
+				(* case: S n, S m *)
+				- clear lp lp'.
+					apply de_morgan_not_and. 
+					assert (n < m \/ n >= m) as [Hnm | Hnm] by lia.
+					+ right.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+				
+				induction n as [| n IHn];
+				induction m as [| m IHm]; try lia.
+				(* case: n = 0, S m *)
+				- apply de_morgan_not_and in IHm as [IHm | IHm].
+					* assert (m = 0) by lia.
+						subst. clear IHm.
+						apply de_morgan_not_and. right.
+						destruct (H 0) as [n Hn].
+						destruct (H n) as [n' Hn'].
+						unfold not; intros Hnn'.
+						destruct Hn as [_ Hn];
+						destruct Hn' as [Hn' _].
+						specialize Hn with n'.
+						unfold dominated_by in Hn; auto.
+					* apply de_morgan_not_and. right.
+							destruct (H 0) as [n Hn] eqn:En.
+							destruct (H
+       					(phi m)) as [n' Hn'] eqn:En'.
+							unfold not; intros Hnn'.
+							destruct Hn as [Hn1 Hn2].
+							destruct Hn' as [Hn' Hn'1].
+							remember (Hn2 n') as Hnot_dom_nn';
+							clear HeqHnot_dom_nn'.
+							assert (n < phi m).
+							{ assert (n = phi 0) by (subst; auto).
+								subst; 
+								apply (phi_inc 0 m).
+								assert (0 < m \/ 0 = m) as [Hx | Hx] by lia;
+								try assumption.
+								exfalso. subst.
+								assert (h n <=qo h n) by (apply qo_refl).
+								contradiction.
+							}
+							assert (n < n') by lia.
+							apply Hnot_dom_nn'. unfold dominated_by.
+							split; try assumption.
+							assert (n' = phi (S m)). 
+							{ subst. rewrite En'. reflexivity. }
+							rewrite H2. subst. assumption.
+				(* case S n, S m *)
+				- clear lp lp'. unfold not. intros [HSnm HSnmh].
+					
