@@ -246,4 +246,57 @@ assert ({f' : nat -> nat | forall n m : nat,
 							rewrite H2. subst. assumption.
 				(* case S n, S m *)
 				- clear lp lp'. unfold not. intros [HSnm HSnmh].
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(* unfold strictly_descending in wqo3f2.
+		apply nforall_ex_sig_bin in wqo3f2.
+		assert ({p : nat * nat | 
+			let x := fst p in let y := snd p in 
+			(x < y /\ ( ~(f y <=qo f x) \/ f x <=qo f y))}).
+		{
+			destruct wqo3f2 as [p Hp].
+			destruct p as [x y] eqn:Exy; simpl in *.
+			apply not_imp_and_sig in Hp as [Hp1 Hp2].
+			apply exist with (x, y); simpl.
+			split; auto.
+			apply de_morgan_not_and in Hp2. rewrite dne in Hp2.
+			auto.
+		}
+		clear wqo3f2; rename H into wqo3f2. *)
+		(* specialize Hfseq with 0.
+		destruct Hfseq as [Nbad HNbad].
+		assert (forall m : nat,
+			Nbad < m -> ~ (comparable qo (f Nbad) (f m))
+		).
+		{ intros m Hm. unfold not. intros Hcomp.
+			specialize HNbad with m.
+			destruct HNbad as [H1 [H2 | [H2 | H2]]].
+			- lia.
+			- unfold comparable in Hcomp.
+				destruct Hcomp as [Hcomp | Hcomp].
+				assert ({p : nat * nat
+           | fst p < snd p /\ f (fst p) <=qo f (snd p)}).
+				{ apply exist with (Nbad, m); simpl; auto. }
+				contradiction.
+				contradiction.
+			- assert ({p : nat * nat
+           | fst p < snd p /\ f (fst p) <=qo f (snd p)}).
+				{ apply exist with (Nbad, m); simpl; auto. }
+				contradiction.
+		} *)
 					
